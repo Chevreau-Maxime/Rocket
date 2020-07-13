@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Rocket Game</title>
+  </head>
+  <body>
+
+    <canvas id="canvas" width="700" height="700" style="position: absolute; left: 0; right: 0; margin: 3px; height: 90%;">Your browser does not support HTML5</canvas>
+
+    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+
+      var can = document.getElementById("canvas");
+      var con = can.getContext('2d');
+      var socket = io();
+      var name;
+      var camera_x = 0;
+      var camera_y = 0;
+      var camera_zoom = 1;
+      var myShip = {x:0, y:0, a:0, dx:0, dy:0, da:0};
+      
+
+      //////////////////////////////////////////////////////////////////////////////////////////////////////////
+      //MAIN
+      
+      while(name == "null" || name.length == 0 || name == undefined){
+        name = prompt("What is your name ? ");
+      }
+      socket.emit('name', name);
+      
+      socket.on('console_broadcast', function(msg){
+        console.log(msg);
+      });
+
+      graphics();
+
+
+
+
+
+      function graphics(){
+        graphic_clear();
+        graphic_background();
+        graphic_ship(myShip.a); //my ship
+      }
+      function graphic_clear(){
+        con.clearRect(0, 0, can.width, can.height);
+      }
+      function graphic_background(){
+        con.fillStyle = "black";
+        con.fillRect(0, 0, can.width, can.height);
+      }
+      function graphic_ship(angle, size = 1){
+        con.strokeStyle = "white";
+        var ship_length = 30*size;
+        var ship_width = 5*size;
+        //forward
+        var point_x = Math.cos(angle)*ship_length + (can.width/2);
+        var point_y = Math.sin(angle)*ship_length + (can.height/2);
+        var start_x = point_x, start_y = point_y;
+        con.moveTo(point_x, point_y);
+        //left
+        point_x = Math.cos(angle-(Math.PI/2))*ship_width + (can.width/2);
+        point_y = Math.sin(angle-(Math.PI/2))*ship_width + (can.height/2);
+        con.lineTo(point_x, point_y);
+        //right
+        point_x = Math.cos(angle+(Math.PI/2))*ship_width + (can.width/2);
+        point_y = Math.sin(angle+(Math.PI/2))*ship_width + (can.height/2);
+        con.lineTo(point_x, point_y);
+        con.lineTo(start_x, start_y);
+        con.stroke();
+      }
+
+    </script>
+  </body>
+</html>
