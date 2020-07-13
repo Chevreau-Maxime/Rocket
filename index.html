@@ -20,11 +20,13 @@
       var camera_zoom = 1;
       var input = {left:0, up:0, right:0, down:0};
       var myShip = {x:0, y:0, a:0, dx:0, dy:0, da:0};
+      var around = {asteroids:[]};
+      var particles = [];
       
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////
       //MAIN
-      
+      graphics();
       while(name == "null" || name.length == 0 || name == undefined){
         name = prompt("What is your name ? ");
       }
@@ -34,7 +36,16 @@
         console.log(msg);
       });
 
-      graphics();
+      socket.on('myShip', function(msg){
+        myShip = msg;
+      });
+
+      socket.on('around', function(msg){
+        around = msg;
+        graphics();
+      });
+
+      
 
 
 
@@ -43,6 +54,8 @@
       function graphics(){
         //graphic_clear();
         graphic_background();
+        graphic_around();
+        graphic_effects();
         graphic_ship(myShip.a); //my ship
       }
       function graphic_clear(){
@@ -51,6 +64,27 @@
       function graphic_background(){
         con.fillStyle = "black";
         con.fillRect(0, 0, can.width, can.height);
+      }
+      function graphic_effects(){
+        var nb = 100;
+        if (particles.length == 0){
+          for (var i=0; i<nb; i++){
+            particles[i] = {x:Math.random()*can.width, y:Math.random()*can.height};
+          }
+        }
+        for (var i=0; i<particles.length; i++){
+          con.fillStyle = "white";
+          con.fillRect(particles[i].x, particles[i].y, 1, 1);
+          
+          particles[i].y -= myShip.dy;
+          particles[i].y += (particles[i].y < 0) ? can.height:0;
+          particles[i].y -= (particles[i].y > can.height) ? can.height:0;
+
+          particles[i].x -= myShip.dx;
+          particles[i].x += (particles[i].x < 0) ? can.width:0;
+          particles[i].x -= (particles[i].x > can.width) ? can.width:0;
+          
+        }
       }
       function graphic_ship(angle, size = 1){
         con.beginPath();
@@ -74,14 +108,27 @@
         con.stroke();
         con.closePath();
       }
-
+      function graphic_around(){
+        graphic_around_asteroids();
+      }
+      function graphic_around_asteroids(){
+        for (var i=0; i<around.asteroids.length; i++){
+          var x = around.asteroids[i].x;
+          var y = around.asteroids[i].y;
+          con.strokeStyle = "white";
+          con.beginPath()
+          con.arc(x+(can.width/2), y+(can.height/2), 10, 0, 6.3);
+          con.stroke();
+          con.closePath();
+        }
+      }
 
       function input_send(){
         socket.emit('input', input);
         console.log(JSON.stringify(input));
       }
       
-      clearInterval(fake_movement);
+      /*clearInterval(fake_movement);
       var inter = setInterval(fake_movement, 1000/30);
       function fake_movement(){
         if (input.left){myShip.da -= 0.01;}
@@ -89,7 +136,7 @@
         myShip.a += myShip.da;
         myShip.da *= 0.9;
         graphics();
-      }
+      }*/
 
       function inputPress(e) {
           if (e.keyCode == 37) input.left = 1;
