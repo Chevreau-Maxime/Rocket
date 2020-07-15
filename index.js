@@ -29,7 +29,7 @@ io.on('connection', function(socket){
   });
   socket.on('disconnect', function(){
     console.log("__Disconnect : " + LOBBY[index].name);
-    LOBBY.splice(index, 1);
+    //LOBBY.splice(index, 1);
   });
 
 });
@@ -46,7 +46,7 @@ http.listen(port, function(){
 ////////////////////////////////
 //INIT
 
-game_init_asteroids();
+game_init_asteroids(0, 0, 100, 75, 0.5, 5);
 
 
 
@@ -109,8 +109,7 @@ function game_send_info(index){
   //asteroids
   var package = {asteroids:[]};
   for (var i=0; i<ASTEROIDS.length; i++){
-    if (LOBBY[index] == undefined){console.log("WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF" + JSON.stringify(LOBBY));}
-    if (distance(ASTEROIDS[i], LOBBY[index].ship) < 50 || true){
+    if (distance(ASTEROIDS[i], LOBBY[index].ship) < 200 ){
       package.asteroids[package.asteroids.length] = Object.create(ASTEROIDS[i]);
     }
   }
@@ -118,7 +117,9 @@ function game_send_info(index){
   for (var i=0; i<package.asteroids.length; i++){
     package.asteroids[i].x -= LOBBY[index].ship.x;
     package.asteroids[i].y -= LOBBY[index].ship.y;
+    package.asteroids[i].r *= 1;
   }
+  //console.log(JSON.stringify(package.asteroids));
   io.to(LOBBY[index].socketID).emit('around', package);
 }
 
@@ -127,13 +128,13 @@ function game_init_ship(index){
   LOBBY[index].input = {left:0, up:0, right:0, down:0};
 }
 
-function game_init_asteroids(x=0, y=0, belt_radius=20, nb=30){
+function game_init_asteroids(x=0, y=0, belt_radius=100, nb=75, min_radius=1, max_radius=5){
   ASTEROIDS = [];
   var rand_angle, rand_radius;
   for (var i=0; i<nb; i++){
     rand_angle = Math.random()*2*Math.PI;
-    rand_radius = belt_radius * (1 + (0.3*Math.random()));
-    ASTEROIDS[i] = {x:Math.cos(rand_angle)*rand_radius + x, y:Math.sin(rand_angle)*rand_radius + y};
+    rand_radius = belt_radius * (1 + (0.9*Math.random()));
+    ASTEROIDS[i] = {x:Math.cos(rand_angle)*rand_radius + x, y:Math.sin(rand_angle)*rand_radius + y, r: min_radius+(Math.random()*(max_radius-min_radius)) };
   }
   //console.log(JSON.stringify(ASTEROIDS));
 }

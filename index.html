@@ -5,7 +5,7 @@
   </head>
   <body style="background-color: black;">
 
-    <canvas id="canvas" width="700" height="700" style="position: absolute; left: 0; right: 0; margin: 0 auto; height: 90%; ">Your browser does not support HTML5</canvas>
+    <canvas id="canvas" width="700" height="700" style="position: absolute; left: 0; right: 0; margin: 0 auto; height: 95%; border: green; border-width: 1px;">Your browser does not support HTML5</canvas>
 
     <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
@@ -66,11 +66,13 @@
       function graphic_background(){
         con.fillStyle = "black";
         con.fillRect(0, 0, can.width, can.height);
+        con.strokeStyle = "white";
+        con.strokeRect(0, 0, can.width, can.height);
       }
       function graphic_ui(){
         //disp coords : 
         con.font = "10px Arial";
-        con.fillText("Coordinates : (" + Math.round(myShip.x) + ", " + Math.round(myShip.y) + ")", 5, 20);
+        con.fillText("Coordinates : (" + Math.round(myShip.x) + ", " + Math.round(-1*myShip.y) + ")", 5, 20);
 
       }
       function graphic_effects(){
@@ -121,13 +123,14 @@
       }
       function graphic_around_asteroids(){
         for (var i=0; i<around.asteroids.length; i++){
+          var r = around.asteroids[i].r * (can.width/camera_size);
           var x = around.asteroids[i].x / (camera_size/2);
           var y = around.asteroids[i].y / (camera_size/2);
           x = (1+x) * (can.width/2);
           y = (1+y) * (can.height/2);
           con.strokeStyle = "white";
           con.beginPath()
-          con.arc(x, y, 10, 0, 6.3);
+          con.arc(x, y, r, 0, 6.3);
           con.stroke();
           con.closePath();
         }
