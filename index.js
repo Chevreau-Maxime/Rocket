@@ -19,19 +19,38 @@ var turnslow = 0.9;
 io.on('connection', function(socket){
   var key = Math.random(); //TODO : get key from cookies instead
   var index = lobby_add(key, socket.id) //TODO : if key matches, return existing index
-  console.log("__Connect : " + JSON.stringify(LOBBY[index]));
+  console.log("__Connect (Temporary) : \nLobby list : ");
+  lobby_print();
 
-  socket.on('name', function(msg){
+
+  /*socket.on('name', function(msg){
     LOBBY[index].name = msg;
   });
+*/
+  socket.on('authentificate', function(msg){
+    //delete temporary
+    LOBBY.splice(index, 1);
+    key = msg.key;
+    if (!lobby_key_available(key)){ //existing account
+      index = lobby_login(key, socket.id);
+      console.log("__LOGIN : ");
+    } else { //new account
+      index = lobby_add(key, socket.id);
+      console.log("__CREATION : ");
+    }
+    LOBBY[index].name = msg.name;
+    lobby_print_player(index);
+  });
+
   socket.on('input', function(msg){
     LOBBY[index].input = msg;
   });
-  socket.on('disconnect', function(){
-    console.log("__Disconnect : " + LOBBY[index].name);
-    //LOBBY.splice(index, 1);
-  });
 
+  socket.on('disconnect', function(){
+    console.log("__DISCONNECT : ");
+    lobby_print_player(index);
+    LOBBY[index].status = false;
+  });
 });
 
 //io.emit('chat message', msg);
@@ -46,8 +65,10 @@ http.listen(port, function(){
 ////////////////////////////////
 //INIT
 
-game_init_asteroids(0, 0, 100, 75, 0.5, 5);
-
+game_init_asteroids();
+game_asteroids_add_belt(0, 0, 150, 200, 5, 10);
+game_asteroids_add_belt(0, 0, 50, 100, 1, 3);
+game_asteroids_check_collision();
 
 
 
@@ -64,11 +85,52 @@ game_init_asteroids(0, 0, 100, 75, 0.5, 5);
 
 function lobby_add(_key, _socketID){
   var index = LOBBY.length;
-  LOBBY[index] = {name:"?", key:_key, socketID:_socketID}
+  LOBBY[index] = {name:"?", key:_key, socketID:_socketID, status:true};
   game_init_ship(index);
   return index;
 }
 
+function lobby_login(_key, _socketID){
+  var index = lobby_key_index(_key);
+  LOBBY[index].socketID = _socketID;
+  LOBBY[index].status = true;
+  return index;
+}
+
+function lobby_key_available(_key){
+  for (var i=0; i<LOBBY.length; i++){
+    if (LOBBY[i].key == _key){
+      return false;
+    }
+  }
+  return true;
+}
+
+function lobby_key_index(_key){
+  for (var i=0; i<LOBBY.length; i++){
+    if (LOBBY[i].key == _key){
+      return i;
+    }
+  }
+  return null;
+}
+
+function lobby_print(){
+  console.log("-----------")
+  for (var i=0; i<LOBBY.length; i++){
+    lobby_print_player(i);
+  }
+  console.log("-----------")
+}
+
+function lobby_print_player(index){
+  var name = LOBBY[index].name;
+  var key = LOBBY[index].key;
+  var socket = LOBBY[index].socketID;
+  var status = LOBBY[index].status;
+
+  console.log("\""+name+"\" ("+key+") --- " + (status ? "online":"offline"))
+}
 
 
 
@@ -104,6 +166,7 @@ function game_step(){
 }
 
 function game_send_info(index){
+  if(LOBBY[index].status == false) return;
   //the ship
   io.to(LOBBY[index].socketID).emit('myShip', LOBBY[index].ship);
   //asteroids
@@ -128,15 +191,30 @@ function game_init_ship(index){
   LOBBY[index].input = {left:0, up:0, right:0, down:0};
 }
 
-function game_init_asteroids(x=0, y=0, belt_radius=100, nb=75, min_radius=1, max_radius=5){
+function game_init_asteroids(){
   ASTEROIDS = [];
+}
+
+function game_asteroids_add_belt(x=0, y=0, belt_radius=100, nb=75, min_radius=1, max_radius=5){
+  var start_i = ASTEROIDS.length;
   var rand_angle, rand_radius;
   for (var i=0; i<nb; i++){
     rand_angle = Math.random()*2*Math.PI;
-    rand_radius = belt_radius * (1 + (0.9*Math.random()));
-    ASTEROIDS[i] = {x:Math.cos(rand_angle)*rand_radius + x, y:Math.sin(rand_angle)*rand_radius + y, r: min_radius+(Math.random()*(max_radius-min_radius)) };
+    rand_radius = belt_radius * (1 + (0.5*Math.random()));
+    ASTEROIDS[start_i + i] = {x:Math.cos(rand_angle)*rand_radius + x, y:Math.sin(rand_angle)*rand_radius + y, r: min_radius+(Math.random()*(max_radius-min_radius)) };
   }
-  //console.log(JSON.stringify(ASTEROIDS));
+}
+
+function game_asteroids_check_collision(){
+  for (var i=0; i<ASTEROIDS.length; i++){
+    for (var j=i+1; j<ASTEROIDS.length; j++){
+      if (distance(ASTEROIDS[i], ASTEROIDS[j]) < (ASTEROIDS[i].r + ASTEROIDS[j].r)){
+        //then delete one
+        ASTEROIDS.splice(j, 1);
+        j -= 1;
+      }
+    }
+  }
 }
 
 

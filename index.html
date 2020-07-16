@@ -14,7 +14,8 @@
       var can = document.getElementById("canvas");
       var con = can.getContext('2d');
       var socket = io();
-      var name;
+      var myName = "";
+      var myKey;
       var camera_x = 0;
       var camera_y = 0;
       var camera_size = 50;
@@ -25,20 +26,42 @@
       
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////
-      //MAIN
-      graphics();
-      while(name == "null" || name.length == 0 || name == undefined){
-        name = prompt("What is your name ? ");
+      //Init
+      myKey = localStorage.getItem("player_key");
+      myName = localStorage.getItem("player_name");
+      console.log("Retrieval of information in cookies...");
+      console.log("Name : " + myName + ", Key : " + myKey);
+
+      //Key
+      if (myKey == null || myKey == undefined){
+        myKey = Math.random();
+        console.log("Key Initialization : " + myKey);
       }
-      socket.emit('name', name);
+      localStorage.setItem("player_key", myKey);
+      //socket.emit('key', myKey);
+
+      //Name
+      while(myName == null || myName.length == 0 || myName == undefined){
+        myName = prompt("What is your name ? ");
+        console.log("Name Initialization : ", myName);
+      }
+      localStorage.setItem("player_name", myName);
+      //socket.emit('myName', myName);
       
+      socket.emit('authentificate', {key:myKey, name:myName});
+
+
+
+      /////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // EVENTS
+
       socket.on('console_broadcast', function(msg){
         console.log(msg);
       });
 
       socket.on('myShip', function(msg){
         myShip = msg;
-        graphics();
+        //graphics();
       });
 
       socket.on('around', function(msg){
@@ -50,6 +73,8 @@
 
 
 
+      ////////////////////////////////////////////////////////////////////////////////////////////
+      //Graphics
 
 
       function graphics(){
@@ -136,20 +161,14 @@
         }
       }
 
+
+      /////////////////////////////////////////////////////////////////////////////////////////////////////////
+      //INPUT
+
       function input_send(){
         socket.emit('input', input);
-        console.log(JSON.stringify(input));
+        //console.log(JSON.stringify(input));
       }
-      
-      /*clearInterval(fake_movement);
-      var inter = setInterval(fake_movement, 1000/30);
-      function fake_movement(){
-        if (input.left){myShip.da -= 0.01;}
-        if (input.right){myShip.da += 0.01;}
-        myShip.a += myShip.da;
-        myShip.da *= 0.9;
-        graphics();
-      }*/
 
       function inputPress(e) {
           if (e.keyCode == 37) input.left = 1;
