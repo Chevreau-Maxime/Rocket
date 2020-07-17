@@ -20,7 +20,7 @@ io.on('connection', function(socket){
   var key = Math.random(); //TODO : get key from cookies instead
   var index = lobby_add(key, socket.id) //TODO : if key matches, return existing index
   console.log("__Connect (Temporary) : \nLobby list : ");
-  lobby_print();
+  //lobby_print();
 
 
   /*socket.on('name', function(msg){
@@ -48,8 +48,9 @@ io.on('connection', function(socket){
 
   socket.on('disconnect', function(){
     console.log("__DISCONNECT : ");
-    lobby_print_player(index);
     LOBBY[index].status = false;
+    lobby_print_player(index);
+    lobby_print();
   });
 });
 
@@ -168,11 +169,21 @@ function game_step(){
 function game_send_info(index){
   if(LOBBY[index].status == false) return;
   //the ship
-  io.to(LOBBY[index].socketID).emit('myShip', LOBBY[index].ship);
+  game_send_info_ship(index);
   //asteroids
-  var package = {asteroids:[]};
+  var package = {asteroids:[], ships:[]};
+  game_send_info_asteroids(index, package);
+  game_send_info_ships(index, package);
+  io.to(LOBBY[index].socketID).emit('around', package);
+}
+
+function game_send_info_ship(index){
+  io.to(LOBBY[index].socketID).emit('myShip', LOBBY[index].ship);
+}
+
+function game_send_info_asteroids(index, package){
   for (var i=0; i<ASTEROIDS.length; i++){
-    if (distance(ASTEROIDS[i], LOBBY[index].ship) < 200 ){
+    if (distance(ASTEROIDS[i], LOBBY[index].ship) < 100 ){
       package.asteroids[package.asteroids.length] = Object.create(ASTEROIDS[i]);
     }
   }
@@ -182,9 +193,26 @@ function game_send_info(index){
     package.asteroids[i].y -= LOBBY[index].ship.y;
     package.asteroids[i].r *= 1;
   }
-  //console.log(JSON.stringify(package.asteroids));
-  io.to(LOBBY[index].socketID).emit('around', package);
 }
+
+function game_send_info_ships(index, package){
+  for (var i=0; i<LOBBY.length; i++){
+    if (distance(LOBBY[i].ship, LOBBY[index].ship) < 100 ){
+      package.ships[package.ships.length] = Object.create(LOBBY[i].ship);
+      package.ships[package.ships.length-1].name = LOBBY[i].name;
+    }
+  }
+  //normalize coordinates for target ship
+  for (var i=0; i<package.ships.length; i++){
+    package.ships[i].x -= LOBBY[index].ship.x;
+    package.ships[i].y -= LOBBY[index].ship.y;
+    package.ships[i].a = package.ships[i].a;
+    package.ships[i].name = package.ships[i].name;
+  }
+}
+
+
+
 
 function game_init_ship(index){
   LOBBY[index].ship = {x:0, y:0, dx:0, dy:0, a:0, da:0};
