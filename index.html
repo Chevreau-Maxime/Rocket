@@ -18,10 +18,12 @@
       var myKey;
       var camera_x = 0;
       var camera_y = 0;
-      var camera_size = 75;
+      var camera_size = 100;
       var input = {left:0, up:0, right:0, down:0};
-      var myShip = {x:0, y:0, a:0, dx:0, dy:0, da:0};
-      var around = {asteroids:[]};
+      var input_mouse_coord = {x:0, y:0};
+      var input_mouse_active = false;
+      var myShip = {};
+      var around = {};
       var particles = [];
       
 
@@ -185,6 +187,8 @@
         //console.log(JSON.stringify(input));
       }
 
+      //KEYBOARD
+
       function inputPress(e) {
           if (e.keyCode == 37) input.left = 1;
           if (e.keyCode == 38) input.up = 1;
@@ -194,7 +198,6 @@
       }
       window.addEventListener('keydown', inputPress, false);
 
-
       function inputUp(e) {      
           if (e.keyCode == 37) input.left = 0;
           if (e.keyCode == 38) input.up = 0;
@@ -203,6 +206,34 @@
           input_send();
       }
       window.addEventListener('keyup', inputUp, false);
+
+      // MOUSE & TOUCH
+
+      function input_click (e) {
+        input_mouse_active = true;
+        input_send();
+      }
+      document.getElementById("canvas").addEventListener('click', input_click, false);
+
+      function input_click_stop(e){
+        input_mouse_active = false;
+      }
+      document.getElementById("canvas").addEventListener('mouseup', input_click_stop, false);
+
+      function input_mouse_move(e){
+        input_mouse_coord.x = e.clientX;
+        input_mouse_coord.y = e.clientY;
+        if (input_mouse_active){
+          input_convert(); 
+          input_send();
+        }
+      }
+      document.getElementById("canvas").addEventListener('mousemove', input_mouse_move);
+
+      function input_convert(){
+        var angle = Math.atan(input_mouse_coord.y / input_mouse_coord.x);
+        console.log(angle);
+      }
     </script>
   </body>
 </html>

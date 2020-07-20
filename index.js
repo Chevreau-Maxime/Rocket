@@ -10,6 +10,7 @@ app.get('/', function(req, res){
 
 var ASTEROIDS = [];
 var LOBBY = [];
+var tick_count;
 var turnspeed = 0.02;
 var acceleration = 0.05;
 var slowdown = 0.95;
@@ -141,29 +142,37 @@ function lobby_print_player(index){
 clearInterval(inter);
 var inter = setInterval(game_step, 1000/30);
 function game_step(){
+  //for each player : 
   for (var i=0; i<LOBBY.length; i++){
     //ship update :
-    //angular :
-    if (LOBBY[i].input.left){ LOBBY[i].ship.da -= turnspeed; }
-    if (LOBBY[i].input.right){ LOBBY[i].ship.da += turnspeed; }
-    LOBBY[i].ship.da *= (Math.abs(LOBBY[i].ship.da) < 0.001) ? 0:turnslow;
-    LOBBY[i].ship.a += LOBBY[i].ship.da;
-    
-    //velocity :
-    if (LOBBY[i].input.up){ 
-      LOBBY[i].ship.dx += Math.cos(LOBBY[i].ship.a)*acceleration;
-      LOBBY[i].ship.dy += Math.sin(LOBBY[i].ship.a)*acceleration;
-    }
-    LOBBY[i].ship.x += LOBBY[i].ship.dx;
-    LOBBY[i].ship.y += LOBBY[i].ship.dy;
-    LOBBY[i].ship.dx *= (Math.abs(LOBBY[i].ship.dx) < 0.001) ? 0:slowdown;
-    LOBBY[i].ship.dy *= (Math.abs(LOBBY[i].ship.dy) < 0.001) ? 0:slowdown;
-    
-    //console.log(JSON.stringify(LOBBY[i].ship));
-
+    game_step_update_ship(i)
     //send info
     game_send_info(i)
   }
+  if (tick_count%600) game_step_slow();
+  tick_count++;
+}
+
+function game_step_slow(){
+
+}
+
+function game_step_update_ship(index){
+  //angular :
+  if (LOBBY[index].input.left){ LOBBY[index].ship.da -= turnspeed; }
+  if (LOBBY[index].input.right){ LOBBY[index].ship.da += turnspeed; }
+  LOBBY[index].ship.da *= (Math.abs(LOBBY[index].ship.da) < 0.001) ? 0:turnslow;
+  LOBBY[index].ship.a += LOBBY[index].ship.da;
+  
+  //velocity :
+  if (LOBBY[index].input.up){ 
+    LOBBY[index].ship.dx += Math.cos(LOBBY[index].ship.a)*acceleration;
+    LOBBY[index].ship.dy += Math.sin(LOBBY[index].ship.a)*acceleration;
+  }
+  LOBBY[index].ship.x += LOBBY[index].ship.dx;
+  LOBBY[index].ship.y += LOBBY[index].ship.dy;
+  LOBBY[index].ship.dx *= (Math.abs(LOBBY[index].ship.dx) < 0.001) ? 0:slowdown;
+  LOBBY[index].ship.dy *= (Math.abs(LOBBY[index].ship.dy) < 0.001) ? 0:slowdown;
 }
 
 function game_send_info(index){
@@ -197,7 +206,7 @@ function game_send_info_asteroids(index, package){
 
 function game_send_info_ships(index, package){
   for (var i=0; i<LOBBY.length; i++){
-    if (distance(LOBBY[i].ship, LOBBY[index].ship) < 100 ){
+    if ((distance(LOBBY[i].ship, LOBBY[index].ship) < 100) & LOBBY[i].status){
       package.ships[package.ships.length] = Object.create(LOBBY[i].ship);
       package.ships[package.ships.length-1].name = LOBBY[i].name;
     }
@@ -215,7 +224,9 @@ function game_send_info_ships(index, package){
 
 
 function game_init_ship(index){
-  LOBBY[index].ship = {x:0, y:0, dx:0, dy:0, a:0, da:0};
+  var r = Math.random()*40;
+  var angle = Math.random()*2*Math.PI;
+  LOBBY[index].ship = {x:r*Math.cos(angle), y:r*Math.sin(angle), dx:0, dy:0, a:0, da:0};
   LOBBY[index].input = {left:0, up:0, right:0, down:0};
 }
 

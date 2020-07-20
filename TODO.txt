@@ -1,3 +1,5 @@
 - Stop displaying/deactivate ships that have been offline for x time
+> Offline ships are not displayed at all
 - Allow for touch control (https://www.w3schools.com/jsref/tryit.asp?filename=tryjsref_event_touch_touches)
 - Init players with a random angle inside circular area
+> done, radius tbd
