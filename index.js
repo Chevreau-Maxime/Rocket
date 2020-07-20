@@ -21,7 +21,7 @@ io.on('connection', function(socket){
   var key = Math.random();
   var index = lobby_add(key, socket.id);
   console.log("__Connect (Temporary)");
-  
+
   socket.on('authentificate', function(msg){
     //delete temporary
     LOBBY.splice(index, 1);
@@ -62,8 +62,9 @@ http.listen(port, function(){
 //INIT
 
 game_init_asteroids();
+game_asteroids_add_belt(0, 0, 400, 200, 10, 20);
 game_asteroids_add_belt(0, 0, 150, 200, 5, 10);
-game_asteroids_add_belt(0, 0, 50, 100, 1, 3);
+game_asteroids_add_belt(0, 0, 50, 70, 1, 3);
 game_asteroids_check_collision();
 
 
@@ -136,6 +137,10 @@ function lobby_print_player(index){
 clearInterval(inter);
 var inter = setInterval(game_step, 1000/30);
 function game_step(){
+
+  //physics : 
+  game_update_asteroids();
+
   //for each player : 
   for (var i=0; i<LOBBY.length; i++){
     //ship update :
@@ -143,7 +148,7 @@ function game_step(){
     //send info
     game_send_info(i)
   }
-  if (tick_count%600) game_step_slow();
+  if (tick_count%300) game_step_slow();
   tick_count++;
 }
 
@@ -238,6 +243,7 @@ function game_asteroids_add_belt(x=0, y=0, belt_radius=100, nb=75, min_radius=1,
     rand_angle = Math.random()*2*Math.PI;
     rand_radius = belt_radius * (1 + (0.5*Math.random()));
     ASTEROIDS[start_i + i] = {x:Math.cos(rand_angle)*rand_radius + x, y:Math.sin(rand_angle)*rand_radius + y, r: min_radius+(Math.random()*(max_radius-min_radius)) };
+    
   }
 }
 
@@ -250,6 +256,12 @@ function game_asteroids_check_collision(){
         j -= 1;
       }
     }
+  }
+}
+
+function game_update_asteroids(){
+  for (var i=0; i<ASTEROIDS.length; i++){
+
   }
 }
 
