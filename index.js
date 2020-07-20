@@ -163,6 +163,9 @@ function game_step_update_ship(index){
   if (LOBBY[index].input.right){ LOBBY[index].ship.da += turnspeed; }
   LOBBY[index].ship.da *= (Math.abs(LOBBY[index].ship.da) < 0.001) ? 0:turnslow;
   LOBBY[index].ship.a += LOBBY[index].ship.da;
+  if (Math.abs(LOBBY[index].ship.a) > Math.PI){
+    LOBBY[index].ship.a -= (LOBBY[index].ship.a/Math.abs(LOBBY[index].ship.a)) * Math.PI * 2;
+  }
   
   //velocity :
   if (LOBBY[index].input.up){ 

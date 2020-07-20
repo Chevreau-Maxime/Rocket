@@ -213,16 +213,22 @@
         input_mouse_active = true;
         input_send();
       }
-      document.getElementById("canvas").addEventListener('click', input_click, false);
+      document.getElementById("canvas").addEventListener('mousedown', input_click, false);
 
       function input_click_stop(e){
         input_mouse_active = false;
+        input = {left:0, up:0, right:0, down:0};
+        input_send();
       }
       document.getElementById("canvas").addEventListener('mouseup', input_click_stop, false);
 
       function input_mouse_move(e){
-        input_mouse_coord.x = e.clientX;
-        input_mouse_coord.y = e.clientY;
+        //get correct coords in canvas (relative to middle)
+        var bounds = document.getElementById("canvas").getBoundingClientRect();
+        var w = can.clientWidth;
+        var h = can.clientHeight;
+        input_mouse_coord.x = e.clientX - bounds.left - (0.5*w);
+        input_mouse_coord.y = e.clientY - bounds.top - (0.5*h);
         if (input_mouse_active){
           input_convert(); 
           input_send();
@@ -231,8 +237,24 @@
       document.getElementById("canvas").addEventListener('mousemove', input_mouse_move);
 
       function input_convert(){
-        var angle = Math.atan(input_mouse_coord.y / input_mouse_coord.x);
-        console.log(angle);
+        //triangle with input..., center of canvas, and proj on vertical axis
+        var x = input_mouse_coord.x;
+        var y = input_mouse_coord.y;
+        var hypothenuse = Math.sqrt((x*x)+(y*y));
+        var angle = Math.acos(input_mouse_coord.y / hypothenuse);
+        angle -= Math.PI/2;
+        if (x<0){
+          angle = Math.PI - angle;
+          if (y>0) angle -= Math.PI*2;
+        }
+        angle *= -1;
+        //console.log(angle);
+        //then to input{} : 
+        input = {left:0, up:0, right:0, down:0};
+        console.log("ship : " + myShip.a + ", input : " + angle);
+        if (myShip.a > angle) input.left = 1;
+        if (myShip.a < angle) input.right = 1;
+
       }
     </script>
   </body>
