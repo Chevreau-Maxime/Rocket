@@ -18,16 +18,10 @@ var turnslow = 0.9;
 
 
 io.on('connection', function(socket){
-  var key = Math.random(); //TODO : get key from cookies instead
-  var index = lobby_add(key, socket.id) //TODO : if key matches, return existing index
-  console.log("__Connect (Temporary) : \nLobby list : ");
-  //lobby_print();
-
-
-  /*socket.on('name', function(msg){
-    LOBBY[index].name = msg;
-  });
-*/
+  var key = Math.random();
+  var index = lobby_add(key, socket.id);
+  console.log("__Connect (Temporary)");
+  
   socket.on('authentificate', function(msg){
     //delete temporary
     LOBBY.splice(index, 1);
