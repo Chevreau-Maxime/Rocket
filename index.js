@@ -140,7 +140,7 @@ function lobby_print_player(index){
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //GAME
 clearInterval(inter);
-var inter = setInterval(game_step, 1000/30);
+var inter = setInterval(game_step, 1000/40);
 function game_step(){
 
   //physics : 
