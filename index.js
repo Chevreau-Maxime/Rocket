@@ -62,9 +62,12 @@ http.listen(port, function(){
 //INIT
 
 game_init_asteroids();
-game_asteroids_add_belt(0, 0, 400, 200, 10, 20);
-game_asteroids_add_belt(0, 0, 150, 200, 5, 10);
-game_asteroids_add_belt(0, 0, 50, 70, 1, 3);
+game_asteroids_add_belt(0, 0, 600, 200, 10, 20);
+game_asteroids_add_belt(0, 0, 350, 100, 10, 20);
+game_asteroids_add_belt(0, 0, 150, 100, 5, 10);
+game_asteroids_add_belt(0, 0, 50, 20, 1, 3);
+game_asteroids_add_belt(0, 0, 0.00001, 1, 30, 30);
+
 game_asteroids_check_collision();
 
 
@@ -133,6 +136,8 @@ function lobby_print_player(index){
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////
 //GAME
 clearInterval(inter);
 var inter = setInterval(game_step, 1000/30);
@@ -145,6 +150,7 @@ function game_step(){
   for (var i=0; i<LOBBY.length; i++){
     //ship update :
     game_step_update_ship(i)
+    game_step_update_collisions(i);
     //send info
     game_send_info(i)
   }
@@ -154,6 +160,29 @@ function game_step(){
 
 function game_step_slow(){
 
+}
+
+
+function game_step_update_collisions(index){
+  for (var i=0; i<ASTEROIDS.length; i++){
+    if (distance(ASTEROIDS[i], LOBBY[index].ship) < ASTEROIDS[i].r + 0.5){
+      //collision
+      var impact_strength = 1;
+      var diff_x = LOBBY[index].ship.x - ASTEROIDS[i].x;
+      var diff_y = LOBBY[index].ship.y - ASTEROIDS[i].y;
+      var angle = Math.acos(diff_y / Math.sqrt( (diff_x*diff_x)+(diff_y*diff_y) ));
+      //if it works.....
+      angle -= Math.PI/2;
+      if (diff_x<0){
+        angle = Math.PI - angle;
+        if (diff_y>0) angle -= Math.PI*2;
+      }
+      angle *= -1;
+      //.........................
+      LOBBY[index].ship.dx += impact_strength * Math.cos(angle);
+      LOBBY[index].ship.dy += impact_strength * Math.sin(angle);
+    }
+  }
 }
 
 function game_step_update_ship(index){
@@ -226,7 +255,8 @@ function game_send_info_ships(index, package){
 
 
 function game_init_ship(index){
-  var r = Math.random()*40;
+  
+  var r = 65 + Math.random()*5;
   var angle = Math.random()*2*Math.PI;
   LOBBY[index].ship = {x:r*Math.cos(angle), y:r*Math.sin(angle), dx:0, dy:0, a:0, da:0};
   LOBBY[index].input = {left:0, up:0, right:0, down:0};
@@ -241,8 +271,14 @@ function game_asteroids_add_belt(x=0, y=0, belt_radius=100, nb=75, min_radius=1,
   var rand_angle, rand_radius;
   for (var i=0; i<nb; i++){
     rand_angle = Math.random()*2*Math.PI;
-    rand_radius = belt_radius * (1 + (0.5*Math.random()));
-    ASTEROIDS[start_i + i] = {x:Math.cos(rand_angle)*rand_radius + x, y:Math.sin(rand_angle)*rand_radius + y, r: min_radius+(Math.random()*(max_radius-min_radius)) };
+    rand_radius = belt_radius * (1 + (0.25*Math.random()));
+    ASTEROIDS[start_i + i] = 
+                             {x:Math.cos(rand_angle)*rand_radius + x, 
+                              y:Math.sin(rand_angle)*rand_radius + y,
+                              r: min_radius+(Math.random()*(max_radius-min_radius)),
+                              orbit_angle:rand_angle,
+                              orbit_radius:rand_radius,
+                              orbit_tick_duration: 180 * (belt_radius/500) * 30};
     
   }
 }
@@ -261,7 +297,9 @@ function game_asteroids_check_collision(){
 
 function game_update_asteroids(){
   for (var i=0; i<ASTEROIDS.length; i++){
-
+    ASTEROIDS[i].orbit_angle += Math.PI / ASTEROIDS[i].orbit_tick_duration;
+    ASTEROIDS[i].x = Math.cos(ASTEROIDS[i].orbit_angle) * ASTEROIDS[i].orbit_radius;
+    ASTEROIDS[i].y = Math.sin(ASTEROIDS[i].orbit_angle) * ASTEROIDS[i].orbit_radius;
   }
 }
 
