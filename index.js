@@ -3,6 +3,7 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var port = process.env.PORT || 3000;
 var fs = require('fs');
+const { start } = require('repl');
 
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
@@ -12,6 +13,7 @@ app.get('/', function(req, res){
 var ASTEROIDS = [];
 var LOBBY = [];
 var tick_count = 0;
+var server_refresh_rate_per_second = 40;
 var turnspeed = 0.02;
 var acceleration = 0.05;
 var slowdown = 0.95;
@@ -134,17 +136,14 @@ function lobby_print_player(index){
 }
 
 function lobby_save_JSON(){
-  console.log("saving...");
   var metaObject = new Object;
   metaObject.asteroids = (ASTEROIDS);
   metaObject.lobby = (LOBBY);
   var metaString = JSON.stringify(metaObject);
   fs.writeFile("save.txt", metaString, function (err) {
     if (err) return console.log(err);
-    console.log('Hello World > save.txt');
+    console.log('saving...');
   });
-  
-  console.log("....saved to JSON.");
 }
 
 function lobby_load_JSON(){
@@ -159,9 +158,9 @@ function lobby_load_JSON(){
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //GAME
 clearInterval(inter);
-var inter = setInterval(game_step, 1000/40);
+var inter = setInterval(game_step, 1000/server_refresh_rate_per_second);
 function game_step(){
-
+  var start_time = Date.now();
   //physics : 
   game_update_asteroids();
 
@@ -173,8 +172,13 @@ function game_step(){
     //send info
     game_send_info(i)
   }
-  if (tick_count == 800) game_step_slow();
   tick_count += 1;
+  if (tick_count == 800) {
+    game_step_slow();
+    var end_time = Date.now();
+    console.log("(full step : time taken : " + (end_time-start_time) + "ms)");
+    console.log("(in a complete second that amounts to "+ server_refresh_rate_per_second * (end_time-start_time) +"ms computing instructions)");
+  }
 }
 
 function game_step_slow(){

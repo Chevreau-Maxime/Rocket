@@ -84,6 +84,7 @@
 
       function graphics(){
         //graphic_clear();
+        graphic_set_zoom();
         graphic_background();
         graphic_around();
         graphic_effects();
@@ -92,6 +93,14 @@
       }
       function graphic_clear(){
         con.clearRect(0, 0, can.width, can.height);
+      }
+      function graphic_set_zoom(){
+        var speed = Math.sqrt((myShip.dx * myShip.dx) + (myShip.dy * myShip.dy));
+        var min = 50;
+        var hardcap = 150;
+        //50 min, 100 hardcap
+        var aimed_camera_size = min + (speed<1 ? speed*(hardcap-min) : (hardcap-min));
+        camera_size += (aimed_camera_size-camera_size)*0.005;
       }
       function graphic_background(){
         con.fillStyle = "black";
@@ -168,7 +177,7 @@
           graphic_ship(around.ships[i].x, around.ships[i].y, around.ships[i].a, around.ships[i].name);
         }
       }
-      function graphic_ship(x, y, a, name, size = 1){
+      function graphic_ship(x, y, a, name){
         //convert to canvas coordinates : 
         x = x / (camera_size/2);
         y = y / (camera_size/2);
@@ -177,6 +186,7 @@
         //draw the ship
         con.beginPath();
         con.strokeStyle = "white";
+        var size = 1 * 50 / (camera_size/2);
         var ship_length = 30*size;
         var ship_width = 5*size;
         //forward
