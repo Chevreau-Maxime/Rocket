@@ -22,10 +22,12 @@
       var input = {left:0, up:0, right:0, down:0};
       var input_mouse_coord = {x:0, y:0};
       var input_mouse_active = false;
+
       var myShip = {};
       var around = {};
-      var particles = [];
-      
+      var background_particles = [];
+      var thrust_particles = [];
+
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////
       //Init
@@ -104,23 +106,60 @@
 
       }
       function graphic_effects(){
-        var nb = 100;
-        if (particles.length == 0){
-          for (var i=0; i<nb; i++){
-            particles[i] = {x:Math.random()*can.width, y:Math.random()*can.height};
+        graphic_effects_background();
+        graphic_effects_thrust();
+      }
+      function graphic_effects_thrust(){
+        var spread = 2;
+        for (var s=0; s<around.ships.length; s++){
+          //add new particles
+          if (around.ships[s].thrust){
+            var index = thrust_particles.length;
+            var angle = around.ships[s].a + Math.PI + ((0.5-Math.random()) * spread);
+            thrust_particles[index] = {
+              x: can.width/2 + (around.ships[s].x * (can.width/2) / (camera_size/2)), 
+              y: can.height/2 + (around.ships[s].y * (can.height/2) / (camera_size/2)), 
+              dx: Math.cos(angle) *  1,
+              dy: Math.sin(angle) *  1,
+              life: 10 + Math.random()*20
+            }
           }
         }
-        for (var i=0; i<particles.length; i++){
+        //update existing particles
+        for (var i=0; i<thrust_particles.length; i++){
+          //ship veloc.
+          thrust_particles[i].x -= myShip.dx * (can.width / camera_size);
+          thrust_particles[i].y -= myShip.dy * (can.height / camera_size);
+          //part. veloc.
+          thrust_particles[i].x += thrust_particles[i].dx;
+          thrust_particles[i].y += thrust_particles[i].dy;
           con.fillStyle = "white";
-          con.fillRect(particles[i].x, particles[i].y, 1, 1);
+          con.fillRect(thrust_particles[i].x, thrust_particles[i].y, 1, 1);
+          thrust_particles[i].life -= 1;
+          if (thrust_particles[i].life < 0){
+            thrust_particles.splice(i, 1);
+            i -= 1;
+          }
+        }
+      }
+      function graphic_effects_background(){
+        var nb = 100;
+        if (background_particles.length == 0){
+          for (var i=0; i<nb; i++){
+            background_particles[i] = {x:Math.random()*can.width, y:Math.random()*can.height};
+          }
+        }
+        for (var i=0; i<background_particles.length; i++){
+          con.fillStyle = "white";
+          con.fillRect(background_particles[i].x, background_particles[i].y, 1, 1);
           
-          particles[i].y -= myShip.dy;
-          particles[i].y += (particles[i].y < 0) ? can.height:0;
-          particles[i].y -= (particles[i].y > can.height) ? can.height:0;
+          background_particles[i].y -= myShip.dy;
+          background_particles[i].y += (background_particles[i].y < 0) ? can.height:0;
+          background_particles[i].y -= (background_particles[i].y > can.height) ? can.height:0;
 
-          particles[i].x -= myShip.dx;
-          particles[i].x += (particles[i].x < 0) ? can.width:0;
-          particles[i].x -= (particles[i].x > can.width) ? can.width:0;
+          background_particles[i].x -= myShip.dx;
+          background_particles[i].x += (background_particles[i].x < 0) ? can.width:0;
+          background_particles[i].x -= (background_particles[i].x > can.width) ? can.width:0;
           
         }
       }

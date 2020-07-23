@@ -2,6 +2,7 @@ var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var port = process.env.PORT || 3000;
+var fs = require('fs');
 
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
@@ -132,6 +133,20 @@ function lobby_print_player(index){
   console.log("\""+name+"\" ("+key+") --- " + (status ? "online":"offline"))
 }
 
+function lobby_save_JSON(){
+  console.log("saving...");
+  var metaObject = new Object;
+  metaObject.asteroids = Object.create(ASTEROIDS);
+  metaObject.lobby = Object.create(LOBBY);
+  var metaString = JSON.stringify(metaObject);
+  fs.writeFile("save.txt", metaString, 'utf8');
+  console.log("....saved to JSON.");
+}
+
+function lobby_load_JSON(){
+
+}
+
 
 
 
@@ -154,13 +169,14 @@ function game_step(){
     //send info
     game_send_info(i)
   }
-  if (tick_count%300) game_step_slow();
+  if (tick_count%800) game_step_slow();
   tick_count++;
 }
 
 function game_step_slow(){
-
+  lobby_save_JSON();
 }
+
 
 
 function game_step_update_collisions(index){
@@ -206,6 +222,14 @@ function game_step_update_ship(index){
   LOBBY[index].ship.dy *= (Math.abs(LOBBY[index].ship.dy) < 0.001) ? 0:slowdown;
 }
 
+function game_update_asteroids(){
+  for (var i=0; i<ASTEROIDS.length; i++){
+    ASTEROIDS[i].orbit_angle += Math.PI / ASTEROIDS[i].orbit_tick_duration;
+    ASTEROIDS[i].x = Math.cos(ASTEROIDS[i].orbit_angle) * ASTEROIDS[i].orbit_radius;
+    ASTEROIDS[i].y = Math.sin(ASTEROIDS[i].orbit_angle) * ASTEROIDS[i].orbit_radius;
+  }
+}
+
 function game_send_info(index){
   if(LOBBY[index].status == false) return;
   //the ship
@@ -223,7 +247,7 @@ function game_send_info_ship(index){
 
 function game_send_info_asteroids(index, package){
   for (var i=0; i<ASTEROIDS.length; i++){
-    if (distance(ASTEROIDS[i], LOBBY[index].ship) < 100 ){
+    if (distance(ASTEROIDS[i], LOBBY[index].ship) < 200 ){
       package.asteroids[package.asteroids.length] = Object.create(ASTEROIDS[i]);
     }
   }
@@ -237,9 +261,11 @@ function game_send_info_asteroids(index, package){
 
 function game_send_info_ships(index, package){
   for (var i=0; i<LOBBY.length; i++){
-    if ((distance(LOBBY[i].ship, LOBBY[index].ship) < 100) & LOBBY[i].status){
+    if ((distance(LOBBY[i].ship, LOBBY[index].ship) < 200) & LOBBY[i].status){
       package.ships[package.ships.length] = Object.create(LOBBY[i].ship);
       package.ships[package.ships.length-1].name = LOBBY[i].name;
+      package.ships[package.ships.length-1].thrust = LOBBY[i].input.up;
+      
     }
   }
   //normalize coordinates for target ship
@@ -248,8 +274,15 @@ function game_send_info_ships(index, package){
     package.ships[i].y -= LOBBY[index].ship.y;
     package.ships[i].a = package.ships[i].a;
     package.ships[i].name = package.ships[i].name;
+    package.ships[i].thrust = package.ships[i].thrust;
   }
 }
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+//GAME INIT FUNCTIONS
 
 
 
@@ -295,13 +328,7 @@ function game_asteroids_check_collision(){
   }
 }
 
-function game_update_asteroids(){
-  for (var i=0; i<ASTEROIDS.length; i++){
-    ASTEROIDS[i].orbit_angle += Math.PI / ASTEROIDS[i].orbit_tick_duration;
-    ASTEROIDS[i].x = Math.cos(ASTEROIDS[i].orbit_angle) * ASTEROIDS[i].orbit_radius;
-    ASTEROIDS[i].y = Math.sin(ASTEROIDS[i].orbit_angle) * ASTEROIDS[i].orbit_radius;
-  }
-}
+
 
 
 
