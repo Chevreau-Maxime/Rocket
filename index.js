@@ -11,7 +11,7 @@ app.get('/', function(req, res){
 
 var ASTEROIDS = [];
 var LOBBY = [];
-var tick_count;
+var tick_count = 0;
 var turnspeed = 0.02;
 var acceleration = 0.05;
 var slowdown = 0.95;
@@ -117,11 +117,11 @@ function lobby_key_index(_key){
 }
 
 function lobby_print(){
-  console.log("-----------")
+  console.log("-----LOBBY LIST------")
   for (var i=0; i<LOBBY.length; i++){
     lobby_print_player(i);
   }
-  console.log("-----------")
+  console.log("---------------------")
 }
 
 function lobby_print_player(index){
@@ -136,10 +136,14 @@ function lobby_print_player(index){
 function lobby_save_JSON(){
   console.log("saving...");
   var metaObject = new Object;
-  metaObject.asteroids = Object.create(ASTEROIDS);
-  metaObject.lobby = Object.create(LOBBY);
+  metaObject.asteroids = (ASTEROIDS);
+  metaObject.lobby = (LOBBY);
   var metaString = JSON.stringify(metaObject);
-  fs.writeFile("save.txt", metaString, 'utf8');
+  fs.writeFile("save.txt", metaString, function (err) {
+    if (err) return console.log(err);
+    console.log('Hello World > save.txt');
+  });
+  
   console.log("....saved to JSON.");
 }
 
@@ -169,11 +173,12 @@ function game_step(){
     //send info
     game_send_info(i)
   }
-  if (tick_count%800) game_step_slow();
-  tick_count++;
+  if (tick_count == 800) game_step_slow();
+  tick_count += 1;
 }
 
 function game_step_slow(){
+  tick_count = 0;
   lobby_save_JSON();
 }
 
