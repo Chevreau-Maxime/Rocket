@@ -14,10 +14,14 @@ var ASTEROIDS = [];
 var LOBBY = [];
 var tick_count = 0;
 var server_refresh_rate_per_second = 40;
+
+//ship constant (will become customizable)
 var turnspeed = 0.02;
 var acceleration = 0.05;
 var slowdown = 0.95;
 var turnslow = 0.9;
+var fuel_max = 10000; //10 000 => 40/s, so 4min10s of acceleration
+var health_max = 5;
 
 
 io.on('connection', function(socket){
@@ -173,7 +177,7 @@ function game_step(){
     game_send_info(i)
   }
   tick_count += 1;
-  if (tick_count == 800) {
+  if (tick_count == server_refresh_rate_per_second*20) {
     game_step_slow();
     var end_time = Date.now();
     console.log("(full step : time taken : " + (end_time-start_time) + "ms)");
@@ -241,7 +245,7 @@ function game_update_asteroids(){
 
 function game_send_info(index){
   if(LOBBY[index].status == false) return;
-  //the ship
+  //the player's own ship info
   game_send_info_ship(index);
   //asteroids
   var package = {asteroids:[], ships:[]};
@@ -300,7 +304,7 @@ function game_init_ship(index){
   
   var r = 65 + Math.random()*5;
   var angle = Math.random()*2*Math.PI;
-  LOBBY[index].ship = {x:r*Math.cos(angle), y:r*Math.sin(angle), dx:0, dy:0, a:0, da:0};
+  LOBBY[index].ship = {x:r*Math.cos(angle), y:r*Math.sin(angle), dx:0, dy:0, a:0, da:0, f:fuel_max, f_max:fuel_max, h:health_max, h_max:health_max};
   LOBBY[index].input = {left:0, up:0, right:0, down:0};
 }
 
@@ -315,13 +319,14 @@ function game_asteroids_add_belt(x=0, y=0, belt_radius=100, nb=75, min_radius=1,
     rand_angle = Math.random()*2*Math.PI;
     rand_radius = belt_radius * (1 + (0.25*Math.random()));
     ASTEROIDS[start_i + i] = 
-                             {x:Math.cos(rand_angle)*rand_radius + x, 
-                              y:Math.sin(rand_angle)*rand_radius + y,
-                              r: min_radius+(Math.random()*(max_radius-min_radius)),
-                              orbit_angle:rand_angle,
-                              orbit_radius:rand_radius,
-                              orbit_tick_duration: 180 * (belt_radius/500) * 30};
-    
+    {
+      x:Math.cos(rand_angle)*rand_radius + x, 
+      y:Math.sin(rand_angle)*rand_radius + y,
+      r: min_radius+(Math.random()*(max_radius-min_radius)),
+      orbit_angle:rand_angle,
+      orbit_radius:rand_radius,
+      orbit_tick_duration: 180 * (belt_radius/500) * 30
+    };
   }
 }
 

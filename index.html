@@ -3,10 +3,14 @@
   <head>
     <title>Micro-Space (ALPHA)</title>
   </head>
-  <body style="background-color: black;">
+  <body style="background-color: black; width: 100%; height: 100%; margin: 0px; padding: 0px;">
 
-    <canvas id="canvas" width="700" height="700" style="position: absolute; left: 0; right: 0; margin: 0 auto; height: 95%; border: green; border-width: 1px;">Your browser does not support HTML5</canvas>
-
+    <canvas id="canvas" width="700" height="700" style="position: absolute; left: 0px; bottom: 0px;">Your browser does not support HTML5</canvas>
+    <div id="text-div" style="position: absolute; top: 2.5%; left: 2.5%; height: 100%; width: 20%; user-select: none;">
+      <p style="color: wheat;" id="text-coordinates">Texte pour les coordonnees........</p>
+      <p style="color: wheat;" id="text-health">Texte pour les points de vie..........</p>
+      <p style="color: wheat;" id="text-fuel">Texte pour le carburant..................</p>
+    </div>
     <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
     <script>
@@ -18,7 +22,7 @@
       var myKey;
       var camera_x = 0;
       var camera_y = 0;
-      var camera_size = 75;
+      var camera_size = 20;
       var input = {left:0, up:0, right:0, down:0};
       var input_mouse_coord = {x:0, y:0};
       var input_mouse_active = false;
@@ -84,12 +88,29 @@
 
       function graphics(){
         //graphic_clear();
+        graphic_set_canvas();
         graphic_set_zoom();
         graphic_background();
         graphic_around();
         graphic_effects();
         graphic_ui();
         graphic_ships();
+      }
+      function graphic_set_canvas(){
+        var div = document.getElementById("text-div");
+        if (window.innerWidth > window.innerHeight){
+          //Mode horizontal, aka Desktop :
+          can.style.height = "100%";
+          can.style.width = "auto";
+          div.style.height = "50%";
+          div.style.width = "auto";
+        } else {
+          //Mode vertical, aka Mobile : 
+          can.style.height = "auto";
+          can.style.width = "100%";
+          div.style.height = "auto";
+          div.style.width = "50%";
+        }
       }
       function graphic_clear(){
         con.clearRect(0, 0, can.width, can.height);
@@ -99,7 +120,7 @@
         var min = 50;
         var hardcap = 150;
         //50 min, 100 hardcap
-        var aimed_camera_size = min + (speed<1 ? speed*(hardcap-min) : (hardcap-min));
+        var aimed_camera_size = min + (speed<1.2 ? speed*(hardcap-min) : (hardcap-min));
         camera_size += (aimed_camera_size-camera_size)*0.005;
       }
       function graphic_background(){
@@ -110,9 +131,28 @@
       }
       function graphic_ui(){
         //disp coords : 
-        con.font = "10px Arial";
-        con.fillText("Coordinates : (" + Math.round(myShip.x) + ", " + Math.round(-1*myShip.y) + ")", 5, 20);
+        //con.font = "10px Arial";
+        //con.fillText("Coordinates : (" + Math.round(myShip.x) + ", " + Math.round(-1*myShip.y) + ")", 5, 20);
+        var smiley_h_yes = "&#x1F499;";
+        var smiley_h_no =  "&#x1F5A4;";
+        var smiley_f_1 = "&#x1F7E9;";
+        var smiley_f_2 = "&#x1F7E8;";
+        var smiley_f_3 = "&#x1F7E7;";
+        var smiley_f_4 = "&#x1F7E5;";
+        var nb_chars = 10;
+        
 
+        document.getElementById("text-coordinates").innerText = "  Coordinates : (" + Math.round(myShip.x) + ", " + Math.round(-1*myShip.y) + ")";
+        document.getElementById("text-health").innerHTML = "  Health : ";
+        for (var i=0; i<myShip.h_max; i++){ 
+          document.getElementById("text-health").innerHTML += (i <= myShip.h ? smiley_h_yes : smiley_h_no);
+        }
+        document.getElementById("text-fuel").innerHTML = "  Fuel : ";
+        for (var i=0; i<Math.round( nb_chars * (myShip.f / myShip.f_max) ); i++){
+          var tmp = myShip.f / myShip.f_max;
+          document.getElementById("text-fuel").innerHTML += (tmp < 0.75 ? (tmp < 0.5 ? (tmp < 0.25 ? smiley_f_4 : smiley_f_3) : smiley_f_2) : smiley_f_1);  
+        }
+        
       }
       function graphic_effects(){
         graphic_effects_background();
