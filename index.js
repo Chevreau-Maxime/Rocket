@@ -4,6 +4,7 @@ var io = require('socket.io')(http);
 var port = process.env.PORT || 3000;
 var fs = require('fs');
 const { start } = require('repl');
+const { spawn } = require('child_process');
 
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
@@ -12,6 +13,7 @@ app.get('/', function(req, res){
 
 var ASTEROIDS = [];
 var LOBBY = [];
+var BULLETS = [];
 var tick_count = 0;
 var server_refresh_rate_per_second = 40;
 
@@ -20,7 +22,7 @@ var turnspeed = 0.02;
 var acceleration = 0.05;
 var slowdown = 0.95;
 var turnslow = 0.9;
-var fuel_max = 10000; //10 000 => 40/s, so 4min10s of acceleration
+var fuel_max = 5000; //10 000 => 40/s, so 4min10s of acceleration
 var health_max = 5;
 
 
@@ -167,6 +169,7 @@ function game_step(){
   var start_time = Date.now();
   //physics : 
   game_update_asteroids();
+  game_update_bullets();
 
   //for each player : 
   for (var i=0; i<LOBBY.length; i++){
@@ -190,13 +193,17 @@ function game_step_slow(){
   lobby_save_JSON();
 }
 
-
-
 function game_step_update_collisions(index){
+  game_step_update_collisions_asteroids(index);
+  game_step_update_collisions_bullets(index);
+}
+
+function game_step_update_collisions_asteroids(index){
   for (var i=0; i<ASTEROIDS.length; i++){
+    ///ASTEROID - SHIP
     if (distance(ASTEROIDS[i], LOBBY[index].ship) < ASTEROIDS[i].r + 0.5){
       //collision
-      var impact_strength = 1;
+      var impact_strength = 2;
       var diff_x = LOBBY[index].ship.x - ASTEROIDS[i].x;
       var diff_y = LOBBY[index].ship.y - ASTEROIDS[i].y;
       var angle = Math.acos(diff_y / Math.sqrt( (diff_x*diff_x)+(diff_y*diff_y) ));
@@ -215,8 +222,19 @@ function game_step_update_collisions(index){
   }
 }
 
+function game_step_update_collisions_bullets(index){
+  for (var i=0; i<BULLETS.length; i++){
+    ///BULLET - SHIP
+    if (distance(BULLETS[i], LOBBY[index].ship) < BULLETS[i].size + 0.5){
+      game_damage_ship(index, 1);
+      BULLETS.splice(i, 1);
+      i -= 1;
+    }
+  }
+}
+
 function game_damage_ship(index, value){
-  LOBBY[index].ship.h -= (LOBBY[index].ship.h > 0) * 1;
+  LOBBY[index].ship.h -= (LOBBY[index].ship.h > 0) * value;
   if (LOBBY[index].ship.h == 0){
     game_init_ship(index);
   }
@@ -244,7 +262,53 @@ function game_step_update_ship(index){
 
   //Fuel : 
   if (LOBBY[index].input.up){
-    LOBBY[index].ship.f -= (LOBBY[index].ship.f > 0) * 1;
+    LOBBY[index].ship.f -= 1;
+  }
+  if (LOBBY[index].ship.f <= 0){
+    game_init_ship(index);
+  }
+
+  //Shoot :
+  if (LOBBY[index].input.shift) game_step_update_ship_shoot(index);
+}
+
+function game_step_update_ship_shoot(index){
+  game_add_bullet(LOBBY[index].ship.x, LOBBY[index].ship.y, LOBBY[index].ship.a)
+}
+
+function game_add_bullet(_x, _y, _a, _speed=2, _lifetime=100, _size=0.2){
+  var index = BULLETS.length;
+  var spawn_safe_dist = 1;
+  BULLETS[index] = 
+  {
+    x:_x + (Math.cos(_a)*spawn_safe_dist), 
+    y:_y + (Math.sin(_a)*spawn_safe_dist), 
+    a:_a, 
+    speed:_speed, 
+    lifetime:_lifetime, 
+    size:_size
+  };
+}
+
+function game_update_bullets(){
+  for (var i=0; i<BULLETS.length; i++){
+    BULLETS[i].x += BULLETS[i].speed * Math.cos(BULLETS[i].a);
+    BULLETS[i].y += BULLETS[i].speed * Math.sin(BULLETS[i].a);
+    BULLETS[i].lifetime -= 1;
+    if (BULLETS[i].lifetime == 0) {
+      BULLETS.splice(i, 1);
+      i -= 1;
+    }
+  }
+  //check collisions with asteroids :
+  for(var i=0; i<BULLETS.length; i++){
+    for (var j=0; j<ASTEROIDS.length; j++){
+      if( distance(BULLETS[i], ASTEROIDS[j]) < BULLETS[i].size + ASTEROIDS[j].r){
+        BULLETS.splice(i, 1);
+        i -= 1;
+        j = ASTEROIDS.length;
+      }
+    }
   }
 }
 
@@ -256,14 +320,18 @@ function game_update_asteroids(){
   }
 }
 
+
+///SEND INFO
+
 function game_send_info(index){
   if(LOBBY[index].status == false) return;
   //the player's own ship info
   game_send_info_ship(index);
   //asteroids
-  var package = {asteroids:[], ships:[]};
+  var package = {asteroids:[], ships:[], bullets:[]};
   game_send_info_asteroids(index, package);
   game_send_info_ships(index, package);
+  game_send_info_bullets(index, package);
   io.to(LOBBY[index].socketID).emit('around', package);
 }
 
@@ -301,6 +369,22 @@ function game_send_info_ships(index, package){
     package.ships[i].a = package.ships[i].a;
     package.ships[i].name = package.ships[i].name;
     package.ships[i].thrust = package.ships[i].thrust;
+  }
+}
+
+function game_send_info_bullets(index, package){
+  for (var i=0; i<BULLETS.length; i++){
+    if (distance(BULLETS[i], LOBBY[index].ship) < 200 ){
+      package.bullets[package.bullets.length] = Object.create(BULLETS[i]);
+    }
+  }
+  //normalize coordinates for target ship
+  for (var i=0; i<package.bullets.length; i++){
+    package.bullets[i].x -= LOBBY[index].ship.x;
+    package.bullets[i].y -= LOBBY[index].ship.y;
+    package.bullets[i].speed *= 1;
+    package.bullets[i].a     *= 1;
+    package.bullets[i].size     *= 1;
   }
 }
 

@@ -23,7 +23,7 @@
       var camera_x = 0;
       var camera_y = 0;
       var camera_size = 50;
-      var input = {left:0, up:0, right:0, down:0};
+      var input = {left:0, up:0, right:0, down:0, shift:0};
       var input_mouse_coord = {x:0, y:0};
       var input_mouse_active = false;
 
@@ -252,6 +252,21 @@
       }
       function graphic_around(){
         graphic_around_asteroids();
+        graphic_around_bullets();
+      }
+      function graphic_around_bullets(){
+        for (var i=0; i<around.bullets.length; i++){
+          var r = around.bullets[i].size * (can.width/camera_size);
+          var x = around.bullets[i].x / (camera_size/2);
+          var y = around.bullets[i].y / (camera_size/2);
+          x = (1+x) * (can.width/2);
+          y = (1+y) * (can.height/2);
+          con.fillStyle = "white";
+          con.beginPath()
+          con.arc(x, y, r, 0, 6.3);
+          con.fill();
+          con.closePath();
+        }
       }
       function graphic_around_asteroids(){
         for (var i=0; i<around.asteroids.length; i++){
@@ -284,6 +299,8 @@
           if (e.keyCode == 38) input.up = 1;
           if (e.keyCode == 39) input.right = 1;
           if (e.keyCode == 40) input.down = 1;
+          if (e.keyCode == 16) input.shift = 1;
+          
           input_send();
       }
       window.addEventListener('keydown', inputPress, false);
@@ -293,6 +310,7 @@
           if (e.keyCode == 38) input.up = 0;
           if (e.keyCode == 39) input.right = 0;
           if (e.keyCode == 40) input.down = 0;
+          if (e.keyCode == 16) input.shift = 0;
           input_send();
       }
       window.addEventListener('keyup', inputUp, false);
