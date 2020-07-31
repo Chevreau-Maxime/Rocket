@@ -233,6 +233,11 @@ function game_step_update_ship(index){
   LOBBY[index].ship.y += LOBBY[index].ship.dy;
   LOBBY[index].ship.dx *= (Math.abs(LOBBY[index].ship.dx) < 0.001) ? 0:slowdown;
   LOBBY[index].ship.dy *= (Math.abs(LOBBY[index].ship.dy) < 0.001) ? 0:slowdown;
+
+  //Fuel : 
+  if (LOBBY[index].input.up){
+    LOBBY[index].ship.f -= 1;
+  }
 }
 
 function game_update_asteroids(){
