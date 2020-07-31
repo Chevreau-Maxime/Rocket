@@ -210,7 +210,15 @@ function game_step_update_collisions(index){
       //.........................
       LOBBY[index].ship.dx += impact_strength * Math.cos(angle);
       LOBBY[index].ship.dy += impact_strength * Math.sin(angle);
+      game_damage_ship(index, 1);
     }
+  }
+}
+
+function game_damage_ship(index, value){
+  LOBBY[index].ship.h -= (LOBBY[index].ship.h > 0) * 1;
+  if (LOBBY[index].ship.h == 0){
+    game_init_ship(index);
   }
 }
 
@@ -225,7 +233,7 @@ function game_step_update_ship(index){
   }
   
   //velocity :
-  if (LOBBY[index].input.up){ 
+  if ((LOBBY[index].input.up) & (LOBBY[index].ship.f > 0)){ 
     LOBBY[index].ship.dx += Math.cos(LOBBY[index].ship.a)*acceleration;
     LOBBY[index].ship.dy += Math.sin(LOBBY[index].ship.a)*acceleration;
   }
@@ -236,7 +244,7 @@ function game_step_update_ship(index){
 
   //Fuel : 
   if (LOBBY[index].input.up){
-    LOBBY[index].ship.f -= 1;
+    LOBBY[index].ship.f -= (LOBBY[index].ship.f > 0) * 1;
   }
 }
 

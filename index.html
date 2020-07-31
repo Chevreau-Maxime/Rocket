@@ -22,7 +22,7 @@
       var myKey;
       var camera_x = 0;
       var camera_y = 0;
-      var camera_size = 20;
+      var camera_size = 50;
       var input = {left:0, up:0, right:0, down:0};
       var input_mouse_coord = {x:0, y:0};
       var input_mouse_active = false;
@@ -145,7 +145,7 @@
         document.getElementById("text-coordinates").innerText = "  Coordinates : (" + Math.round(myShip.x) + ", " + Math.round(-1*myShip.y) + ")";
         document.getElementById("text-health").innerHTML = "  Health : ";
         for (var i=0; i<myShip.h_max; i++){ 
-          document.getElementById("text-health").innerHTML += (i <= myShip.h ? smiley_h_yes : smiley_h_no);
+          document.getElementById("text-health").innerHTML += (i < myShip.h ? smiley_h_yes : smiley_h_no);
         }
         document.getElementById("text-fuel").innerHTML = "  Fuel : ";
         for (var i=0; i<Math.round( nb_chars * (myShip.f / myShip.f_max) ); i++){
