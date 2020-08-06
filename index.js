@@ -1,4 +1,5 @@
-var app = require('express')();
+var express = require('express');
+var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var port = process.env.PORT || 3000;
@@ -10,6 +11,7 @@ app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
 });
 
+app.use('/static', express.static(__dirname + '/public'));
 
 var ASTEROIDS = [];
 var LOBBY = [];
@@ -384,7 +386,7 @@ function game_send_info_bullets(index, package){
     package.bullets[i].y -= LOBBY[index].ship.y;
     package.bullets[i].speed *= 1;
     package.bullets[i].a     *= 1;
-    package.bullets[i].size     *= 1;
+    package.bullets[i].size  *= 1;
   }
 }
 
