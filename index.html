@@ -22,9 +22,9 @@
       var socket = io();
       var myName = "";
       var myKey;
-      var camera_x = 0;
-      var camera_y = 0;
-      var camera_size = 50;
+      //var camera_x = 0; <- later if want to introduce wobbling
+      //var camera_y = 0;
+      var camera_size = 150;
       var input = {left:0, up:0, right:0, down:0, shift:0};
       var input_mouse_coord = {x:0, y:0};
       var input_mouse_active = false;
@@ -110,29 +110,6 @@
         can.height = window.innerHeight;
         can_scale = can.height;
         con.translate(0.5*can.width, 0.5*can.height);
-
-        //var ratio_hw = (window.innerHeight > window.innerWidth) ? 0 : window.innerHeight / window.innerWidth;
-
-        
-        //can_scale = (can.width > can.height ? can.height : can.width);
-        
-        //if h/w = 1/2, must translate center by 1/4 of width to the right
-
-        //can.style.height = "";
-        //can.style.width = "";
-        /*if (window.innerWidth > window.innerHeight){
-          //Mode horizontal, aka Desktop :
-          //can.style.height = "100%";
-          //can.style.width = "auto";
-          div.style.height = "50%";
-          div.style.width = "auto";
-        } else {
-          //Mode vertical, aka Mobile : 
-          //can.style.height = "auto";
-          //can.style.width = "100%";
-          div.style.height = "auto";
-          div.style.width = "50%";
-        }*/
       }
       function graphic_clear(){
         con.clearRect(0, 0, can.width, can.height);
