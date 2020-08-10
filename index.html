@@ -5,7 +5,7 @@
   </head>
   <body style="background-color: black; width: 100%; height: 100%; margin: 0px; padding: 0px;">
 
-    <canvas id="canvas" width="700" height="700" style="position: absolute; left: 0px; bottom: 0px;">Your browser does not support HTML5</canvas>
+    <canvas id="canvas" style="position: absolute; left: 0px; bottom: 0px;">Your browser does not support HTML5</canvas>
     <div id="text-div" style="position: absolute; top: 2.5%; left: 2.5%; height: 100%; width: 20%; user-select: none;">
       <p style="color: wheat;" id="text-coordinates">Texte pour les coordonnees........</p>
       <p style="color: wheat;" id="text-health">Texte pour les points de vie..........</p>
@@ -14,7 +14,8 @@
     <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
     <script>
-
+      
+      var can_scale;
       var can = document.getElementById("canvas");
       var con = can.getContext('2d');
       var socket = io();
@@ -58,6 +59,9 @@
       
       socket.emit('authentificate', {key:myKey, name:myName});
 
+      graphic_set_canvas();
+      graphic_set_zoom();
+      graphic_effects_background_init();
 
 
       /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -98,19 +102,36 @@
       }
       function graphic_set_canvas(){
         var div = document.getElementById("text-div");
-        if (window.innerWidth > window.innerHeight){
+        div.style.height = "50%";
+        div.style.width = "auto";
+
+        can.width = window.innerWidth;
+        can.height = window.innerHeight;
+        can_scale = can.height;
+        con.translate(0.5*can.width, 0.5*can.height);
+
+        //var ratio_hw = (window.innerHeight > window.innerWidth) ? 0 : window.innerHeight / window.innerWidth;
+
+        
+        //can_scale = (can.width > can.height ? can.height : can.width);
+        
+        //if h/w = 1/2, must translate center by 1/4 of width to the right
+
+        //can.style.height = "";
+        //can.style.width = "";
+        /*if (window.innerWidth > window.innerHeight){
           //Mode horizontal, aka Desktop :
-          can.style.height = "100%";
-          can.style.width = "auto";
+          //can.style.height = "100%";
+          //can.style.width = "auto";
           div.style.height = "50%";
           div.style.width = "auto";
         } else {
           //Mode vertical, aka Mobile : 
-          can.style.height = "auto";
-          can.style.width = "100%";
+          //can.style.height = "auto";
+          //can.style.width = "100%";
           div.style.height = "auto";
           div.style.width = "50%";
-        }
+        }*/
       }
       function graphic_clear(){
         con.clearRect(0, 0, can.width, can.height);
@@ -125,9 +146,10 @@
       }
       function graphic_background(){
         con.fillStyle = "black";
-        con.fillRect(0, 0, can.width, can.height);
+        con.fillRect(-can.width/2, -can.height/2, can.width, can.height);
         con.strokeStyle = "white";
-        con.strokeRect(0, 0, can.width, can.height);
+        con.lineWidth = 5;
+        con.strokeRect(-can.width/2, -can.height/2, can.width, can.height);
       }
       function graphic_ui(){
         //disp coords : 
@@ -166,50 +188,51 @@
             var index = thrust_particles.length;
             var angle = around.ships[s].a + Math.PI + ((0.5-Math.random()) * spread);
             thrust_particles[index] = {
-              x: can.width/2 + (around.ships[s].x * (can.width/2) / (camera_size/2)), 
-              y: can.height/2 + (around.ships[s].y * (can.height/2) / (camera_size/2)), 
-              dx: Math.cos(angle) *  1,
-              dy: Math.sin(angle) *  1,
+              x: (around.ships[s].x * (can_scale/camera_size)), 
+              y: (around.ships[s].y * (can_scale/camera_size)),
+              dx: Math.cos(angle) * 1,
+              dy: Math.sin(angle) * 1,
               life: 10 + Math.random()*20
-            }
+            };
           }
         }
         //update existing particles
         for (var i=0; i<thrust_particles.length; i++){
           //ship veloc.
-          thrust_particles[i].x -= myShip.dx * (can.width / camera_size);
-          thrust_particles[i].y -= myShip.dy * (can.height / camera_size);
+          thrust_particles[i].x -= myShip.dx * (can_scale / camera_size);
+          thrust_particles[i].y -= myShip.dy * (can_scale / camera_size);
           //part. veloc.
           thrust_particles[i].x += thrust_particles[i].dx;
           thrust_particles[i].y += thrust_particles[i].dy;
           con.fillStyle = "white";
-          con.fillRect(thrust_particles[i].x, thrust_particles[i].y, 1, 1);
+          con.fillRect(thrust_particles[i].x, thrust_particles[i].y, 2, 2);
           thrust_particles[i].life -= 1;
-          if (thrust_particles[i].life < 0){
+          if (thrust_particles[i].life <= 0){
             thrust_particles.splice(i, 1);
             i -= 1;
           }
         }
       }
-      function graphic_effects_background(){
-        var nb = 100;
-        if (background_particles.length == 0){
-          for (var i=0; i<nb; i++){
-            background_particles[i] = {x:Math.random()*can.width, y:Math.random()*can.height};
-          }
+      window.onresize = graphic_effects_background_init;
+      function graphic_effects_background_init(){
+        var nb = 150;
+        background_particles = new Array(nb);
+        for (var i=0; i<nb; i++){
+          background_particles[i] = {x:-can.width/2 + (Math.random()*can.width), y:-can.height/2 + (Math.random()*can.height)};
         }
+      }
+      function graphic_effects_background(){
         for (var i=0; i<background_particles.length; i++){
           con.fillStyle = "white";
           con.fillRect(background_particles[i].x, background_particles[i].y, 1, 1);
           
           background_particles[i].y -= myShip.dy;
-          background_particles[i].y += (background_particles[i].y < 0) ? can.height:0;
-          background_particles[i].y -= (background_particles[i].y > can.height) ? can.height:0;
+          background_particles[i].y += (background_particles[i].y < -can.height/2) ? can.height:0;
+          background_particles[i].y -= (background_particles[i].y > can.height/2) ? can.height:0;
 
           background_particles[i].x -= myShip.dx;
-          background_particles[i].x += (background_particles[i].x < 0) ? can.width:0;
-          background_particles[i].x -= (background_particles[i].x > can.width) ? can.width:0;
-          
+          background_particles[i].x += (background_particles[i].x < -can.width/2) ? can.width:0;
+          background_particles[i].x -= (background_particles[i].x > can.width/2) ? can.width:0;
         }
       }
       function graphic_ships(){
@@ -219,10 +242,8 @@
       }
       function graphic_ship(x, y, a, name){
         //convert to canvas coordinates : 
-        x = x / (camera_size/2);
-        y = y / (camera_size/2);
-        x = (1+x) * (can.width/2);
-        y = (1+y) * (can.height/2);
+        x = x * (can_scale/camera_size);
+        y = y * (can_scale/camera_size);
         //draw the ship
         con.beginPath();
         con.strokeStyle = "white";
@@ -247,7 +268,8 @@
         con.closePath();
 
         //write name
-        con.font = "10px Arial";
+        con.font = (can_scale/40) + "px Arial";
+        con.fillStyle = "white";
         con.fillText(name, x - (myName.length*4), y - 30);
       }
       function graphic_around(){
@@ -256,11 +278,9 @@
       }
       function graphic_around_bullets(){
         for (var i=0; i<around.bullets.length; i++){
-          var r = around.bullets[i].size * (can.width/camera_size);
-          var x = around.bullets[i].x / (camera_size/2);
-          var y = around.bullets[i].y / (camera_size/2);
-          x = (1+x) * (can.width/2);
-          y = (1+y) * (can.height/2);
+          var r = around.bullets[i].size * (can_scale/camera_size);
+          var x = around.bullets[i].x * (can_scale/camera_size);
+          var y = around.bullets[i].y * (can_scale/camera_size);
           con.fillStyle = "white";
           con.beginPath()
           con.arc(x, y, r, 0, 6.3);
@@ -270,14 +290,13 @@
       }
       function graphic_around_asteroids(){
         for (var i=0; i<around.asteroids.length; i++){
-          var r = around.asteroids[i].r * (can.width/camera_size);
-          var x = around.asteroids[i].x / (camera_size/2);
-          var y = around.asteroids[i].y / (camera_size/2);
-          x = (1+x) * (can.width/2);
-          y = (1+y) * (can.height/2);
+          var r = around.asteroids[i].r * (can_scale/camera_size);
+          var x = around.asteroids[i].x * (can_scale/camera_size);
+          var y = around.asteroids[i].y * (can_scale/camera_size);
           con.strokeStyle = "white";
           con.beginPath()
           con.arc(x, y, r, 0, 6.3);
+          con.lineWidth = 2;
           con.stroke();
           con.closePath();
         }

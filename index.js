@@ -75,7 +75,7 @@ http.listen(port, function(){
 game_init_asteroids();
 game_asteroids_add_belt(0, 0, 600, 200, 10, 20);
 game_asteroids_add_belt(0, 0, 350, 100, 10, 20);
-game_asteroids_add_belt(0, 0, 150, 100, 5, 10);
+game_asteroids_add_belt(0, 0, 150, 200, 5, 10);
 game_asteroids_add_belt(0, 0, 50, 20, 1, 3);
 game_asteroids_add_belt(0, 0, 0.00001, 1, 30, 30);
 
