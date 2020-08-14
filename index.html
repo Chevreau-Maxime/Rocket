@@ -92,7 +92,6 @@
 
 
       function graphics(){
-        //graphic_clear();
         graphic_set_canvas();
         graphic_set_zoom();
         graphic_background();
@@ -110,9 +109,6 @@
         can.height = window.innerHeight;
         can_scale = can.height;
         con.translate(0.5*can.width, 0.5*can.height);
-      }
-      function graphic_clear(){
-        con.clearRect(0, 0, can.width, can.height);
       }
       function graphic_set_zoom(){
         var speed = Math.sqrt((myShip.dx * myShip.dx) + (myShip.dy * myShip.dy));

@@ -72,12 +72,19 @@ http.listen(port, function(){
 ////////////////////////////////
 //INIT
 
+
+/** Radius zones :
+ * - 0:
+ * 
+ */
+
 game_init_asteroids();
-game_asteroids_add_belt(0, 0, 600, 200, 10, 20);
-game_asteroids_add_belt(0, 0, 350, 100, 10, 20);
-game_asteroids_add_belt(0, 0, 150, 200, 5, 10);
-game_asteroids_add_belt(0, 0, 50, 20, 1, 3);
-game_asteroids_add_belt(0, 0, 0.00001, 1, 30, 30);
+game_asteroids_add_belt(0, 0,    1000, 300, 400, 10, 20);
+game_asteroids_add_belt(0, 0,     410, 300, 800,  2, 5);
+game_asteroids_add_belt(0, 0,     350,  50, 100, 10, 20);
+game_asteroids_add_belt(0, 0,     150,  20, 200,  5, 10);
+game_asteroids_add_belt(0, 0,      50,  10,  20,  1,  3);
+game_asteroids_add_belt(0, 0, 0.00001, 0.001,   1, 30, 30);
 
 game_asteroids_check_collision();
 
@@ -411,12 +418,12 @@ function game_init_asteroids(){
   ASTEROIDS = [];
 }
 
-function game_asteroids_add_belt(x=0, y=0, belt_radius=100, nb=75, min_radius=1, max_radius=5){
+function game_asteroids_add_belt(x=0, y=0, belt_radius=100, belt_radius_width=30, nb=75, min_radius=1, max_radius=5){
   var start_i = ASTEROIDS.length;
   var rand_angle, rand_radius;
   for (var i=0; i<nb; i++){
     rand_angle = Math.random()*2*Math.PI;
-    rand_radius = belt_radius * (1 + (0.25*Math.random()));
+    rand_radius = belt_radius + (belt_radius_width*Math.random());
     ASTEROIDS[start_i + i] = 
     {
       x:Math.cos(rand_angle)*rand_radius + x, 
