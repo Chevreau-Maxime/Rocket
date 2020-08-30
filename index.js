@@ -192,7 +192,7 @@ function game_step_update_collisions(index){
   for (var i=0; i<ASTEROIDS.length; i++){
     if (distance(ASTEROIDS[i], LOBBY[index].ship) < ASTEROIDS[i].r + 0.5){
       //collision
-      var impact_strength = 1;
+      var impact_strength = 10;
       var diff_x = LOBBY[index].ship.x - ASTEROIDS[i].x;
       var diff_y = LOBBY[index].ship.y - ASTEROIDS[i].y;
       var angle = Math.acos(diff_y / Math.sqrt( (diff_x*diff_x)+(diff_y*diff_y) ));
