@@ -1,5 +1,11 @@
-- Save State in txt file (as JSON)
+(todo moved to project mgmt on github)
 
+- Health stat, display, and drain on impacts
+- Fuel stat, display and drain
+- Load function
+
+- Save State in txt file (as JSON)
+> Save done, now need a load function
 - Display particles to help discernate movement
 > done, thrusting particles
 - Stop displaying/deactivate ships that have been offline for x time
