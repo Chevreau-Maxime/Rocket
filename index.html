@@ -107,7 +107,7 @@
 
         can.width = window.innerWidth;
         can.height = window.innerHeight;
-        can_scale = can.height;
+        can_scale = (can.height < can.width) ? can.height : can.width;
         con.translate(0.5*can.width, 0.5*can.height);
       }
       function graphic_set_zoom(){
